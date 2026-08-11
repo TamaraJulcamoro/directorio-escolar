@@ -76,21 +76,18 @@ function App() {
     }
   };
 const handleFileSelect = async (file) => {
-  console.log('📁 Archivo seleccionado:', file);
-  console.log('📁 Nombre:', file.name);
-  console.log('📁 Tipo:', file.type);
-  console.log('📁 Tamaño:', file.size);
-
   setIsUploading(true);
   setUploadError(null);
 
   try {
-    console.log('☁️ Intentando subir a Supabase...');
-    console.log('Bucket:', BUCKET_NAME);
-    console.log('Archivo:', FILE_NAME);
+    console.log('📁 Archivo seleccionado:', file);
+    console.log('📁 Nombre:', file.name);
+    console.log('📁 Tamaño:', file.size);
+    console.log('📁 Tipo:', file.type);
+    console.log('☁️ Bucket:', BUCKET_NAME);
+    console.log('📄 Nombre destino:', FILE_NAME);
 
-    const { data, error: uploadError } = await supabase
-      .storage
+    const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(FILE_NAME, file, {
         upsert: true,
@@ -98,28 +95,24 @@ const handleFileSelect = async (file) => {
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
 
-    console.log('📤 Resultado de Supabase:', data);
-    console.log('❌ Error de Supabase:', uploadError);
+    console.log('☁️ RESPUESTA SUPABASE:', data);
+    console.log('❌ ERROR SUPABASE:', error);
 
-    if (uploadError) {
-      throw new Error(
-        `Supabase: ${uploadError.message} | Código: ${uploadError.statusCode || 'sin código'}`
-      );
+    if (error) {
+      throw error;
     }
 
-    console.log('✅ Excel subido correctamente.');
-
-    console.log('📊 Procesando Excel...');
+    console.log('✅ ARCHIVO SUBIDO CORRECTAMENTE');
 
     const parsedStudents = await parseExcelFile(file);
 
     console.log('👨‍🎓 Estudiantes encontrados:', parsedStudents.length);
-    console.log('📋 Primer estudiante:', parsedStudents[0]);
 
     if (parsedStudents.length === 0) {
-      throw new Error(
-        'El Excel se subió correctamente, pero no se encontraron estudiantes. Revisa los encabezados del Excel.'
+      setUploadError(
+        'El archivo se subió, pero no se encontraron estudiantes válidos.'
       );
+      return;
     }
 
     setStudents(parsedStudents);
@@ -133,14 +126,14 @@ const handleFileSelect = async (file) => {
     );
 
     alert(
-      `✅ ¡Éxito! Se cargaron ${parsedStudents.length} estudiantes al directorio.`
+      `✅ ¡Éxito! Se cargaron ${parsedStudents.length} estudiantes.`
     );
 
   } catch (err) {
     console.error('🔥 ERROR COMPLETO:', err);
 
     setUploadError(
-      `Error: ${err.message}`
+      `Error al subir: ${err.message || 'Error desconocido'}`
     );
 
   } finally {

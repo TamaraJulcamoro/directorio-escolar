@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { UploadCloud } from 'lucide-react';
 
-export default function FileUpload({ onFileSelect }) {
+export default function FileUpload({ onFileSelect, currentCount }) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrag = useCallback((e) => {
@@ -52,10 +52,16 @@ export default function FileUpload({ onFileSelect }) {
   };
 
   return (
-    <div className="card" style={{ maxWidth: '600px', margin: '4rem auto' }}>
+    <div className="card" style={{ maxWidth: '600px', margin: '2rem auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ color: 'var(--color-dark)', marginBottom: '0.5rem' }}>Bienvenido al Directorio</h2>
-        <p style={{ color: 'var(--color-text-muted)' }}>Sube tu archivo Excel para comenzar a visualizar los datos de los estudiantes.</p>
+        <h2 style={{ color: 'var(--color-dark)', marginBottom: '0.5rem' }}>
+          {currentCount > 0 ? '🔄 Actualizar Directorio' : '📂 Subir Directorio'}
+        </h2>
+        <p style={{ color: 'var(--color-text-muted)' }}>
+          {currentCount > 0
+            ? `Actualmente hay ${currentCount} estudiantes. Sube el nuevo Excel para reemplazarlos.`
+            : 'Sube el archivo Excel con los datos de los estudiantes del colegio.'}
+        </p>
       </div>
 
       <label

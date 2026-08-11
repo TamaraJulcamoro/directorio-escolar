@@ -11,8 +11,10 @@ function App() {
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState(null);
-  const [view, setView] = useState('public'); // 'public', 'login', 'admin'
+  const [uploadError, setUploadError] = useState(null);
+  const [loginError, setLoginError] = useState(null);
+  const [connectionError, setConnectionError] = useState(null);
+  const [view, setView] = useState('public');
   const [passwordInput, setPasswordInput] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -23,7 +25,7 @@ function App() {
 
   const loadDirectoryFromCloud = async () => {
     setIsLoading(true);
-    setError(null);
+    setConnectionError(null);
     try {
       // Descargar el archivo Excel desde Supabase Storage
       const { data, error: downloadError } = await supabase
@@ -57,7 +59,7 @@ function App() {
       }
     } catch (err) {
       console.error('Error al cargar:', err);
-      setError('No se pudo conectar con el servidor. Verifica tu conexión a internet.');
+      setConnectionError('No se pudo conectar con el servidor. Verifica tu conexión a internet.');
     } finally {
       setIsLoading(false);
     }
@@ -68,43 +70,84 @@ function App() {
     if (passwordInput === ADMIN_PASSWORD) {
       setView('admin');
       setPasswordInput('');
-      setError(null);
+      setLoginError(null);
     } else {
-      setError('Contraseña incorrecta. Inténtalo de nuevo.');
+      setLoginError('Contraseña incorrecta. Inténtalo de nuevo.');
     }
   };
+const handleFileSelect = async (file) => {
+  console.log('📁 Archivo seleccionado:', file);
+  console.log('📁 Nombre:', file.name);
+  console.log('📁 Tipo:', file.type);
+  console.log('📁 Tamaño:', file.size);
 
-  const handleFileSelect = async (file) => {
-    setIsUploading(true);
-    setError(null);
-    try {
-      // 1. Subir el archivo Excel a Supabase Storage (reemplaza el anterior)
-      const { error: uploadError } = await supabase
-        .storage
-        .from(BUCKET_NAME)
-        .upload(FILE_NAME, file, { upsert: true });
+  setIsUploading(true);
+  setUploadError(null);
 
-      if (uploadError) throw uploadError;
+  try {
+    console.log('☁️ Intentando subir a Supabase...');
+    console.log('Bucket:', BUCKET_NAME);
+    console.log('Archivo:', FILE_NAME);
 
-      // 2. Parsear el archivo para mostrarlo localmente
-      const parsedStudents = await parseExcelFile(file);
-      if (parsedStudents.length === 0) {
-        setError('No se encontraron estudiantes válidos en el archivo. Verifica el formato.');
-        return;
-      }
-      setStudents(parsedStudents);
-      setLastUpdated(new Date().toLocaleDateString('es-PE', {
-        year: 'numeric', month: 'long', day: 'numeric'
-      }));
-      alert(`✅ ¡Éxito! Se subieron ${parsedStudents.length} estudiantes al directorio. Todos los profesores ya pueden verlos.`);
-    } catch (err) {
-      console.error('Error al subir:', err);
-      setError('Hubo un error al subir el archivo. Por favor intenta de nuevo.');
-    } finally {
-      setIsUploading(false);
+    const { data, error: uploadError } = await supabase
+      .storage
+      .from(BUCKET_NAME)
+      .upload(FILE_NAME, file, {
+        upsert: true,
+        contentType: file.type || 
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+
+    console.log('📤 Resultado de Supabase:', data);
+    console.log('❌ Error de Supabase:', uploadError);
+
+    if (uploadError) {
+      throw new Error(
+        `Supabase: ${uploadError.message} | Código: ${uploadError.statusCode || 'sin código'}`
+      );
     }
-  };
 
+    console.log('✅ Excel subido correctamente.');
+
+    console.log('📊 Procesando Excel...');
+
+    const parsedStudents = await parseExcelFile(file);
+
+    console.log('👨‍🎓 Estudiantes encontrados:', parsedStudents.length);
+    console.log('📋 Primer estudiante:', parsedStudents[0]);
+
+    if (parsedStudents.length === 0) {
+      throw new Error(
+        'El Excel se subió correctamente, pero no se encontraron estudiantes. Revisa los encabezados del Excel.'
+      );
+    }
+
+    setStudents(parsedStudents);
+
+    setLastUpdated(
+      new Date().toLocaleDateString('es-PE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    );
+
+    alert(
+      `✅ ¡Éxito! Se cargaron ${parsedStudents.length} estudiantes al directorio.`
+    );
+
+  } catch (err) {
+    console.error('🔥 ERROR COMPLETO:', err);
+
+    setUploadError(
+      `Error: ${err.message}`
+    );
+
+  } finally {
+    setIsUploading(false);
+  }
+};
+  
   const renderContent = () => {
     // Pantalla de login de administrador
     if (view === 'login') {
@@ -119,9 +162,9 @@ function App() {
               Solo el administrador del colegio puede subir o actualizar el directorio.
             </p>
 
-            {error && (
+            {loginError && (
               <div style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#dc2626', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.875rem' }}>
-                {error}
+                {loginError}
               </div>
             )}
 
@@ -138,7 +181,7 @@ function App() {
               <button type="submit" className="btn" style={{ backgroundColor: 'var(--color-primary)', color: 'white', fontWeight: 'bold', padding: '0.75rem', fontSize: '1rem' }}>
                 Ingresar como Administrador
               </button>
-              <button type="button" className="btn btn-outline" onClick={() => { setView('public'); setError(null); }}>
+              <button type="button" className="btn btn-outline" onClick={() => { setView('public'); setLoginError(null); }}>
                 Volver al Directorio
               </button>
             </form>
@@ -177,7 +220,14 @@ function App() {
               <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
             </div>
           ) : (
-            <FileUpload onFileSelect={handleFileSelect} currentCount={students.length} />
+            <>
+              {uploadError && (
+                <div style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#dc2626', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', border: '1px solid rgba(239,68,68,0.3)', fontSize: '0.875rem' }}>
+                  <strong>⚠️ Error:</strong> {uploadError}
+                </div>
+              )}
+              <FileUpload onFileSelect={handleFileSelect} currentCount={students.length} />
+            </>
           )}
         </div>
       );

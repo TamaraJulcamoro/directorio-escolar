@@ -55,13 +55,13 @@ export default function Directory({ students }) {
         </select>
 
         <select 
-          className="select-input"
-          value={filterSeccion}
-          onChange={(e) => setFilterSeccion(e.target.value)}
-        >
-          <option value="">Todas las Secciones</option>
-          {secciones.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+  className="select-input"
+  value={filterSeccion}
+  onChange={(e) => setFilterSeccion(e.target.value)}
+>
+  <option value="">Todas las Secciones</option>
+  {secciones.map(s => <option key={s} value={s}>{s}</option>)}
+</select>
         
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
           Mostrando {filteredStudents.length} estudiantes

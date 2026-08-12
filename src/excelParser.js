@@ -1,105 +1,38 @@
 import * as XLSX from 'xlsx';
 
-const limpiarTexto = (valor) => {
-  if (valor === undefined || valor === null) return '';
+// ==========================================
+// NORMALIZAR TEXTO
+// ==========================================
 
-  return String(valor)
-    .replace(/[\r\n]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
-const normalizar = (valor) => {
-  return limpiarTexto(valor)
+const normalizarTexto = (texto) => {
+  return String(texto ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
     .toUpperCase();
 };
 
-const normalizarGrado = (valor) => {
-  const texto = normalizar(valor);
+// ==========================================
+// CONVERTIR VALORES DEL EXCEL A TEXTO
+// ==========================================
 
-  if (!texto) return '';
-
-  if (
-    texto === 'PRIMERO' ||
-    texto === '1' ||
-    texto === '1RO' ||
-    texto === '1°' ||
-    texto === '1ERO'
-  ) {
-    return 'Primero';
+const convertirValor = (value) => {
+  if (value === undefined || value === null || value === '') {
+    return '';
   }
 
-  if (
-    texto === 'SEGUNDO' ||
-    texto === '2' ||
-    texto === '2DO' ||
-    texto === '2°'
-  ) {
-    return 'Segundo';
+  if (value instanceof Date) {
+    return value.toLocaleDateString('es-PE');
   }
 
-  if (
-    texto === 'TERCERO' ||
-    texto === '3' ||
-    texto === '3RO' ||
-    texto === '3°'
-  ) {
-    return 'Tercero';
-  }
-
-  if (
-    texto === 'CUARTO' ||
-    texto === '4' ||
-    texto === '4TO' ||
-    texto === '4°'
-  ) {
-    return 'Cuarto';
-  }
-
-  if (
-    texto === 'QUINTO' ||
-    texto === '5' ||
-    texto === '5TO' ||
-    texto === '5°'
-  ) {
-    return 'Quinto';
-  }
-
-  if (
-    texto === 'SEXTO' ||
-    texto === '6' ||
-    texto === '6TO' ||
-    texto === '6°'
-  ) {
-    return 'Sexto';
-  }
-
-  return '';
+  return String(value).trim();
 };
 
-const normalizarSeccion = (valor) => {
-  const texto = limpiarTexto(valor);
-
-  if (!texto) return '';
-
-  const limpio = normalizar(texto);
-
-  // Solo aceptamos secciones tipo A, B, C...
-  if (/^[A-Z]$/.test(limpio)) {
-    return limpio;
-  }
-
-  // Casos como "Sección A"
-  const match = limpio.match(/SECCION\s+([A-Z])/);
-
-  if (match) {
-    return match[1];
-  }
-
-  return texto;
-};
+// ==========================================
+// PARSER DEL EXCEL
+// ==========================================
 
 export const parseExcelFile = (file) => {
   return new Promise((resolve, reject) => {
@@ -114,22 +47,27 @@ export const parseExcelFile = (file) => {
           cellDates: true
         });
 
-        const allStudents = [];
+        let allStudents = [];
+
+        // ==========================================
+        // RECORRER TODAS LAS HOJAS
+        // ==========================================
 
         workbook.SheetNames.forEach((sheetName) => {
           const sheet = workbook.Sheets[sheetName];
 
           const rawRows = XLSX.utils.sheet_to_json(sheet, {
             header: 1,
-            defval: '',
-            raw: false
+            defval: ''
           });
 
-          if (!rawRows || rawRows.length === 0) return;
+          if (!rawRows || rawRows.length === 0) {
+            return;
+          }
 
-          // -------------------------------------------------------
-          // BUSCAR LA FILA REAL DE ENCABEZADOS
-          // -------------------------------------------------------
+          // ==========================================
+          // BUSCAR ENCABEZADOS
+          // ==========================================
 
           let headerRowIndex = -1;
           let headers = [];
@@ -139,28 +77,27 @@ export const parseExcelFile = (file) => {
             i < Math.min(rawRows.length, 30);
             i++
           ) {
-            const row = rawRows[i] || [];
+            const row = rawRows[i];
 
-            const textos = row.map((celda) =>
-              normalizar(celda)
-            );
+            if (!row) continue;
 
-            const tieneDNI = textos.some((h) =>
-              h === 'DNI' ||
-              h.includes('DNI')
-            );
+            const rowString = row
+              .map((cell) => normalizarTexto(cell))
+              .join(' ');
 
-            const tieneNombre = textos.some((h) =>
-              h.includes('NOMBRE') ||
-              h.includes('ESTUDIANTE') ||
-              h.includes('APELLIDO')
-            );
+            const tieneDNI = rowString.includes('DNI');
+
+            const tieneNombre =
+              rowString.includes('NOMBRE') ||
+              rowString.includes('NOMBRES') ||
+              rowString.includes('APELLIDO') ||
+              rowString.includes('ESTUDIANTE');
 
             if (tieneDNI && tieneNombre) {
               headerRowIndex = i;
 
-              headers = row.map((h) =>
-                limpiarTexto(h)
+              headers = row.map((header) =>
+                normalizarTexto(header)
               );
 
               break;
@@ -174,9 +111,9 @@ export const parseExcelFile = (file) => {
             return;
           }
 
-          // -------------------------------------------------------
-          // PROCESAR ESTUDIANTES
-          // -------------------------------------------------------
+          // ==========================================
+          // RECORRER FILAS DE ESTUDIANTES
+          // ==========================================
 
           for (
             let rowIndex = headerRowIndex + 1;
@@ -188,344 +125,333 @@ export const parseExcelFile = (file) => {
             if (!row) continue;
 
             const filaVacia = row.every(
-              (valor) =>
-                limpiarTexto(valor) === ''
+              (celda) =>
+                String(celda ?? '').trim() === ''
             );
 
             if (filaVacia) continue;
 
+            // ==========================================
+            // OBJETO ESTUDIANTE
+            // ==========================================
+
             const student = {
-              id: `${sheetName}-${rowIndex}-${Math.random()
-                .toString(36)
-                .substring(2, 9)}`,
+              id:
+                typeof crypto !== 'undefined' &&
+                crypto.randomUUID
+                  ? crypto.randomUUID()
+                  : `${sheetName}-${rowIndex}-${Date.now()}`,
 
               hojaOrigen: sheetName,
 
               grado: '',
-
               seccion: '',
-
               nombres: '',
-
               dni: '',
-
               fechaNacimiento: '',
 
+              // Datos del estudiante
               domicilio: '',
-
               referencia: '',
-
               seguro: '',
 
+              // Padre
               padreNombre: '',
               padreVive: '',
               padreCelular: '',
               padreDomicilio: '',
 
+              // Madre
               madreNombre: '',
               madreVive: '',
               madreCelular: '',
               madreDomicilio: '',
 
+              // Apoderado
+              quienEsApoderado: '',
               apoderadoNombre: '',
               apoderadoParentesco: '',
-              apoderadoCelular: '',
-              quienEsApoderado: ''
+              apoderadoCelular: ''
             };
 
             let hasValidData = false;
 
-            headers.forEach(
-              (header, columnIndex) => {
-                const value = row[columnIndex];
+            // ==========================================
+            // LEER CADA COLUMNA
+            // ==========================================
 
+            headers.forEach((header, index) => {
+              const value = row[index];
+
+              if (
+                value === undefined ||
+                value === null ||
+                String(value).trim() === ''
+              ) {
+                return;
+              }
+
+              hasValidData = true;
+
+              const cleanKey = normalizarTexto(header);
+              const cleanValue = convertirValor(value);
+
+              // ========================================
+              // GRADO
+              // ========================================
+
+              if (
+                cleanKey === 'GRADO' ||
+                cleanKey.includes('GRADO DE ESTUDIO') ||
+                cleanKey.includes('NIVEL Y GRADO')
+              ) {
+                student.grado = cleanValue;
+              }
+
+              // ========================================
+              // SECCIÓN
+              // ========================================
+
+              else if (
+                cleanKey === 'SECCION' ||
+                cleanKey.includes('SECCION')
+              ) {
+                student.seccion = cleanValue;
+              }
+
+              // ========================================
+              // DNI
+              // ========================================
+
+              else if (
+                cleanKey === 'DNI' ||
+                cleanKey.includes('N° DNI') ||
+                cleanKey.includes('Nº DNI') ||
+                cleanKey.includes('NUMERO DE DNI') ||
+                cleanKey.includes('DOCUMENTO DE IDENTIDAD')
+              ) {
+                student.dni = cleanValue;
+              }
+
+              // ========================================
+              // FECHA DE NACIMIENTO
+              // ========================================
+
+              else if (
+                cleanKey.includes('FECHA DE NACIMIENTO') ||
+                cleanKey.includes('F NACIMIENTO') ||
+                cleanKey.includes('NACIMIENTO')
+              ) {
+                student.fechaNacimiento = cleanValue;
+              }
+
+              // ========================================
+              // DIRECCIÓN DEL ESTUDIANTE
+              // ========================================
+              //
+              // IMPORTANTE:
+              // Esto se evalúa ANTES de REFERENCIA.
+              //
+              // DIRECCIÓN DE DOMICILIO ACTUAL
+              //      ↓
+              // student.domicilio
+              //
+              // ========================================
+
+              else if (
+                cleanKey ===
+                  'DIRECCION DE DOMICILIO ACTUAL' ||
+                cleanKey.includes(
+                  'DIRECCION DE DOMICILIO ACTUAL'
+                ) ||
+                cleanKey.includes('DOMICILIO ACTUAL')
+              ) {
+                student.domicilio = cleanValue;
+              }
+
+              // ========================================
+              // DOMICILIO GENERAL DEL ESTUDIANTE
+              // ========================================
+
+              else if (
+                cleanKey.includes('DOMICILIO') &&
+                !cleanKey.includes('PADRE') &&
+                !cleanKey.includes('MADRE') &&
+                !cleanKey.includes('APODERADO')
+              ) {
+                student.domicilio = cleanValue;
+              }
+
+              // ========================================
+              // REFERENCIA
+              // ========================================
+
+              else if (
+                cleanKey === 'REFERENCIA' ||
+                cleanKey.includes('REFERENCIA')
+              ) {
+                student.referencia = cleanValue;
+              }
+
+              // ========================================
+              // SEGURO
+              // ========================================
+
+              else if (
+                cleanKey === 'SEGURO' ||
+                cleanKey.includes('SEGURO')
+              ) {
+                student.seguro = cleanValue;
+              }
+
+              // ========================================
+              // PADRE
+              // ========================================
+
+              else if (
+                cleanKey.includes('PADRE')
+              ) {
                 if (
-                  value === undefined ||
-                  value === null ||
-                  limpiarTexto(value) === ''
+                  cleanKey.includes('NOMBRE')
                 ) {
-                  return;
+                  student.padreNombre = cleanValue;
                 }
 
-                const textoHeader = normalizar(
-                  header
-                );
-
-                const textoValor =
-                  limpiarTexto(value);
-
-                hasValidData = true;
-
-                // ==================================================
-                // GRADO
-                // ==================================================
-
-                if (
-                  textoHeader === 'GRADO' ||
-                  textoHeader === 'NIVEL Y GRADO' ||
-                  textoHeader === 'GRADO DEL ESTUDIANTE'
+                else if (
+                  cleanKey.includes('VIVE')
                 ) {
-                  const grado =
-                    normalizarGrado(value);
-
-                  if (grado) {
-                    student.grado = grado;
-                  }
-
-                  return;
+                  student.padreVive = cleanValue;
                 }
 
-                // ==================================================
-                // SECCIÓN
-                // ==================================================
-
-                if (
-                  textoHeader === 'SECCION' ||
-                  textoHeader === 'SECCIÓN' ||
-                  textoHeader === 'SECCION DEL ESTUDIANTE' ||
-                  textoHeader === 'SECCION DEL ESTUDIANTE'
+                else if (
+                  cleanKey.includes('CELULAR')
                 ) {
-                  student.seccion =
-                    normalizarSeccion(value);
-
-                  return;
+                  student.padreCelular = cleanValue;
                 }
 
-                // ==================================================
-                // DNI
-                // ==================================================
-
-                if (
-                  textoHeader === 'DNI' ||
-                  textoHeader === 'N° DNI' ||
-                  textoHeader === 'Nº DNI' ||
-                  textoHeader.includes('DNI')
+                else if (
+                  cleanKey.includes('DOMICILIO')
                 ) {
-                  student.dni = textoValor;
-                  return;
-                }
-
-                // ==================================================
-                // FECHA DE NACIMIENTO
-                // ==================================================
-
-                if (
-                  textoHeader.includes(
-                    'FECHA DE NACIMIENTO'
-                  ) ||
-                  textoHeader.includes(
-                    'NACIMIENTO'
-                  )
-                ) {
-                  student.fechaNacimiento =
-                    textoValor;
-
-                  return;
-                }
-
-                // ==================================================
-                // DIRECCIÓN / DOMICILIO DEL ESTUDIANTE
-                // IMPORTANTE:
-                // NO confundir con padre/madre
-                // ==================================================
-
-                if (
-                  (
-                    textoHeader === 'DIRECCION' ||
-                    textoHeader === 'DIRECCIÓN' ||
-                    textoHeader === 'DOMICILIO' ||
-                    textoHeader === 'DIRECCION DEL ESTUDIANTE' ||
-                    textoHeader === 'DOMICILIO DEL ESTUDIANTE' ||
-                    textoHeader.includes('DIRECCION DEL ESTUDIANTE') ||
-                    textoHeader.includes('DOMICILIO DEL ESTUDIANTE')
-                  ) &&
-                  !textoHeader.includes('PADRE') &&
-                  !textoHeader.includes('MADRE')
-                ) {
-                  student.domicilio =
-                    textoValor;
-
-                  return;
-                }
-
-                // ==================================================
-                // REFERENCIA
-                // ==================================================
-
-                if (
-                  textoHeader === 'REFERENCIA' ||
-                  textoHeader === 'REFERENCIAS' ||
-                  textoHeader.includes('REFERENCIA')
-                ) {
-                  student.referencia =
-                    textoValor;
-
-                  return;
-                }
-
-                // ==================================================
-                // SEGURO
-                // ==================================================
-
-                if (
-                  textoHeader === 'SEGURO' ||
-                  textoHeader.includes('TIPO DE SEGURO') ||
-                  textoHeader.includes('SEGURO DE SALUD')
-                ) {
-                  student.seguro =
-                    textoValor;
-
-                  return;
-                }
-
-                // ==================================================
-                // PADRE
-                // ==================================================
-
-                if (
-                  textoHeader.includes('PADRE')
-                ) {
-                  if (
-                    textoHeader.includes('NOMBRE')
-                  ) {
-                    student.padreNombre =
-                      textoValor;
-                  } else if (
-                    textoHeader.includes('CELULAR') ||
-                    textoHeader.includes('TELEFONO') ||
-                    textoHeader.includes('TELÉFONO')
-                  ) {
-                    student.padreCelular =
-                      textoValor;
-                  } else if (
-                    textoHeader.includes('VIVE')
-                  ) {
-                    student.padreVive =
-                      textoValor;
-                  } else if (
-                    textoHeader.includes('DOMICILIO') ||
-                    textoHeader.includes('DIRECCION')
-                  ) {
-                    student.padreDomicilio =
-                      textoValor;
-                  }
-
-                  return;
-                }
-
-                // ==================================================
-                // MADRE
-                // ==================================================
-
-                if (
-                  textoHeader.includes('MADRE')
-                ) {
-                  if (
-                    textoHeader.includes('NOMBRE')
-                  ) {
-                    student.madreNombre =
-                      textoValor;
-                  } else if (
-                    textoHeader.includes('CELULAR') ||
-                    textoHeader.includes('TELEFONO') ||
-                    textoHeader.includes('TELÉFONO')
-                  ) {
-                    student.madreCelular =
-                      textoValor;
-                  } else if (
-                    textoHeader.includes('VIVE')
-                  ) {
-                    student.madreVive =
-                      textoValor;
-                  } else if (
-                    textoHeader.includes('DOMICILIO') ||
-                    textoHeader.includes('DIRECCION')
-                  ) {
-                    student.madreDomicilio =
-                      textoValor;
-                  }
-
-                  return;
-                }
-
-                // ==================================================
-                // QUIÉN ES EL APODERADO
-                // ==================================================
-
-                if (
-                  textoHeader.includes('QUIEN ES EL APODERADO') ||
-                  textoHeader.includes('QUIEN ES EL APO')
-                ) {
-                  student.quienEsApoderado =
-                    textoValor;
-
-                  return;
-                }
-
-                // ==================================================
-                // APODERADO
-                // ==================================================
-
-                if (
-                  textoHeader.includes('APODERADO')
-                ) {
-                  if (
-                    textoHeader.includes('NOMBRE')
-                  ) {
-                    student.apoderadoNombre =
-                      textoValor;
-                  } else if (
-                    textoHeader.includes('PARENTESCO')
-                  ) {
-                    student.apoderadoParentesco =
-                      textoValor;
-                  } else if (
-                    textoHeader.includes('CELULAR') ||
-                    textoHeader.includes('TELEFONO') ||
-                    textoHeader.includes('TELÉFONO')
-                  ) {
-                    student.apoderadoCelular =
-                      textoValor;
-                  }
-
-                  return;
-                }
-
-                // ==================================================
-                // NOMBRE DEL ESTUDIANTE
-                // ==================================================
-
-                if (
-                  (
-                    textoHeader.includes('NOMBRE') ||
-                    textoHeader.includes('APELLIDO') ||
-                    textoHeader.includes('ESTUDIANTE')
-                  ) &&
-                  !textoHeader.includes('PADRE') &&
-                  !textoHeader.includes('MADRE') &&
-                  !textoHeader.includes('APODERADO')
-                ) {
-                  student.nombres =
-                    textoValor;
-
-                  return;
+                  student.padreDomicilio = cleanValue;
                 }
               }
-            );
 
-            // ======================================================
-            // FALLBACK DEL GRADO
-            // Si la hoja se llama PRIMERO, SEGUNDO, etc.
-            // ======================================================
+              // ========================================
+              // MADRE
+              // ========================================
+
+              else if (
+                cleanKey.includes('MADRE')
+              ) {
+                if (
+                  cleanKey.includes('NOMBRE')
+                ) {
+                  student.madreNombre = cleanValue;
+                }
+
+                else if (
+                  cleanKey.includes('VIVE')
+                ) {
+                  student.madreVive = cleanValue;
+                }
+
+                else if (
+                  cleanKey.includes('CELULAR')
+                ) {
+                  student.madreCelular = cleanValue;
+                }
+
+                else if (
+                  cleanKey.includes('DOMICILIO')
+                ) {
+                  student.madreDomicilio = cleanValue;
+                }
+              }
+
+              // ========================================
+              // QUIÉN ES EL APODERADO
+              // ========================================
+
+              else if (
+                cleanKey.includes(
+                  'QUIEN ES EL APODERADO'
+                ) ||
+                cleanKey.includes(
+                  'QUIEN ES EL APO'
+                )
+              ) {
+                student.quienEsApoderado = cleanValue;
+              }
+
+              // ========================================
+              // NOMBRE DEL APODERADO
+              // ========================================
+
+              else if (
+                cleanKey.includes('APODERADO') &&
+                cleanKey.includes('NOMBRE')
+              ) {
+                student.apoderadoNombre = cleanValue;
+              }
+
+              // ========================================
+              // PARENTESCO
+              // ========================================
+
+              else if (
+                cleanKey.includes('PARENTESCO') ||
+                cleanKey.includes(
+                  'CON EL ESTUDIANTE'
+                ) ||
+                cleanKey.includes(
+                  'CON LA ESTUDIANTE'
+                )
+              ) {
+                student.apoderadoParentesco =
+                  cleanValue;
+              }
+
+              // ========================================
+              // CELULAR DEL APODERADO
+              // ========================================
+
+              else if (
+                cleanKey.includes('CELULAR') &&
+                cleanKey.includes('APODERADO')
+              ) {
+                student.apoderadoCelular =
+                  cleanValue;
+              }
+
+              // ========================================
+              // NOMBRES DEL ESTUDIANTE
+              // ========================================
+
+              else if (
+                (
+                  cleanKey.includes('NOMBRE') ||
+                  cleanKey.includes('NOMBRES') ||
+                  cleanKey.includes('APELLIDOS')
+                ) &&
+                !cleanKey.includes('PADRE') &&
+                !cleanKey.includes('MADRE') &&
+                !cleanKey.includes('APODERADO')
+              ) {
+                student.nombres = cleanValue;
+              }
+            });
+
+            // ==========================================
+            // SI NO HAY GRADO, USAR EL NOMBRE DE LA HOJA
+            // ==========================================
 
             if (!student.grado) {
-              student.grado =
-                normalizarGrado(sheetName);
+              student.grado = sheetName;
             }
 
-            // ======================================================
-            // VALIDAR QUE NO GUARDE FILAS QUE NO SON ESTUDIANTES
-            // ======================================================
+            // ==========================================
+            // GUARDAR ESTUDIANTE
+            // ==========================================
 
             if (
               hasValidData &&
@@ -539,10 +465,16 @@ export const parseExcelFile = (file) => {
           }
         });
 
+        console.log(
+          '✅ Estudiantes procesados:',
+          allStudents.length
+        );
+
         resolve(allStudents);
+
       } catch (error) {
         console.error(
-          'Error procesando Excel:',
+          '❌ Error procesando Excel:',
           error
         );
 
@@ -551,6 +483,11 @@ export const parseExcelFile = (file) => {
     };
 
     reader.onerror = (error) => {
+      console.error(
+        '❌ Error leyendo archivo:',
+        error
+      );
+
       reject(error);
     };
 

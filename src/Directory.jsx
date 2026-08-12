@@ -8,10 +8,38 @@ export default function Directory({ students }) {
   const [filterSeccion, setFilterSeccion] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
 
-  // Extraer valores únicos para los filtros
-  const grados = useMemo(() => {
-    return [...new Set(students.map(s => s.grado).filter(Boolean))].sort();
-  }, [students]);
+  const gradeOrder = [
+  'Primero',
+  'Segundo',
+  'Tercero',
+  'Cuarto',
+  'Quinto',
+  'Sexto'
+];
+
+const grados = [...new Set(
+  students
+    .map(student => student.grado?.trim())
+    .filter(Boolean)
+)].sort((a, b) => {
+  const indexA = gradeOrder.findIndex(
+    grade => grado.toLowerCase() === a.toLowerCase()
+  );
+
+  const indexB = gradeOrder.findIndex(
+    grade => grado.toLowerCase() === b.toLowerCase()
+  );
+
+  // Los grados conocidos van primero
+  if (indexA !== -1 && indexB !== -1) {
+    return indexA - indexB;
+  }
+
+  if (indexA !== -1) return -1;
+  if (indexB !== -1) return 1;
+
+  return a.localeCompare(b, 'es');
+});
 
   const secciones = useMemo(() => {
     return [...new Set(students.map(s => s.seccion).filter(Boolean))].sort();

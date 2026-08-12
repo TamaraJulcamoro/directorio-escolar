@@ -8,7 +8,7 @@ export default function Directory({ students }) {
   const [filterSeccion, setFilterSeccion] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
 
-  const gradeOrder = [
+ const gradeOrder = [
   'Primero',
   'Segundo',
   'Tercero',
@@ -23,11 +23,11 @@ const grados = [...new Set(
     .filter(Boolean)
 )].sort((a, b) => {
   const indexA = gradeOrder.findIndex(
-    grade => grado.toLowerCase() === a.toLowerCase()
+    grade => grade.toLowerCase() === a.toLowerCase()
   );
 
   const indexB = gradeOrder.findIndex(
-    grade => grado.toLowerCase() === b.toLowerCase()
+    grade => grade.toLowerCase() === b.toLowerCase()
   );
 
   // Los grados conocidos van primero

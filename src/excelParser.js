@@ -1,39 +1,14 @@
 import * as XLSX from 'xlsx';
 
-// ==========================================
-// NORMALIZAR TEXTO
-// ==========================================
-
-const normalizarTexto = (texto) => {
-  return String(texto ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\r\n]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toUpperCase();
-};
-
-// ==========================================
-// CONVERTIR VALORES DEL EXCEL A TEXTO
-// ==========================================
-
-const convertirValor = (value) => {
-  if (value === undefined || value === null || value === '') {
-    return '';
-  }
-
-  if (value instanceof Date) {
-    return value.toLocaleDateString('es-PE');
-  }
-
-  return String(value).trim();
-};
-
-// ==========================================
-// PARSER DEL EXCEL
-// ==========================================
-
+/**
+ * Lee el Excel y convierte cada fila en un estudiante.
+ * Mantiene por separado:
+ * - Dirección del estudiante
+ * - Referencia
+ * - Dirección del padre
+ * - Dirección de la madre
+ * - Dirección del apoderado
+ */
 export const parseExcelFile = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -41,17 +16,83 @@ export const parseExcelFile = (file) => {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-
         const workbook = XLSX.read(data, {
           type: 'array',
           cellDates: true
         });
 
-        let allStudents = [];
+        const allStudents = [];
 
-        // ==========================================
-        // RECORRER TODAS LAS HOJAS
-        // ==========================================
+        // Normalizar texto de encabezados
+        const normalizeHeader = (value) => {
+          return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[\r\n]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toUpperCase();
+        };
+
+        // Convertir valores del Excel a texto
+        const cleanValue = (value) => {
+          if (value === null || value === undefined || value === '') {
+            return '';
+          }
+
+          if (value instanceof Date) {
+            const day = String(value.getDate()).padStart(2, '0');
+            const month = String(value.getMonth() + 1).padStart(2, '0');
+            const year = value.getFullYear();
+
+            return `${day}/${month}/${year}`;
+          }
+
+          return String(value).trim();
+        };
+
+        // Normalizar nombres de grado
+        const normalizeGrade = (value, sheetName = '') => {
+          const text = cleanValue(value || sheetName)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toUpperCase();
+
+          const grades = {
+            '1': 'Primero',
+            '1RO': 'Primero',
+            '1RO.': 'Primero',
+            'PRIMERO': 'Primero',
+
+            '2': 'Segundo',
+            '2DO': 'Segundo',
+            '2DO.': 'Segundo',
+            'SEGUNDO': 'Segundo',
+
+            '3': 'Tercero',
+            '3RO': 'Tercero',
+            '3RO.': 'Tercero',
+            'TERCERO': 'Tercero',
+
+            '4': 'Cuarto',
+            '4TO': 'Cuarto',
+            '4TO.': 'Cuarto',
+            'CUARTO': 'Cuarto',
+
+            '5': 'Quinto',
+            '5TO': 'Quinto',
+            '5TO.': 'Quinto',
+            'QUINTO': 'Quinto',
+
+            '6': 'Sexto',
+            '6TO': 'Sexto',
+            '6TO.': 'Sexto',
+            'SEXTO': 'Sexto'
+          };
+
+          return grades[text] || cleanValue(value || sheetName);
+        };
 
         workbook.SheetNames.forEach((sheetName) => {
           const sheet = workbook.Sheets[sheetName];
@@ -61,60 +102,57 @@ export const parseExcelFile = (file) => {
             defval: ''
           });
 
-          if (!rawRows || rawRows.length === 0) {
-            return;
-          }
+          if (!rawRows.length) return;
 
-          // ==========================================
-          // BUSCAR ENCABEZADOS
-          // ==========================================
-
+          // Buscar la verdadera fila de encabezados
           let headerRowIndex = -1;
           let headers = [];
 
-          for (
-            let i = 0;
-            i < Math.min(rawRows.length, 30);
-            i++
-          ) {
+          for (let i = 0; i < Math.min(rawRows.length, 30); i++) {
             const row = rawRows[i];
 
-            if (!row) continue;
+            if (!row || !row.length) continue;
 
-            const rowString = row
-              .map((cell) => normalizarTexto(cell))
-              .join(' ');
+            const normalizedRow = row.map(normalizeHeader);
 
-            const tieneDNI = rowString.includes('DNI');
+            const tieneGrado = normalizedRow.some(
+              h => h === 'GRADO'
+            );
 
-            const tieneNombre =
-              rowString.includes('NOMBRE') ||
-              rowString.includes('NOMBRES') ||
-              rowString.includes('APELLIDO') ||
-              rowString.includes('ESTUDIANTE');
+            const tieneSeccion = normalizedRow.some(
+              h => h === 'SECCION'
+            );
 
-            if (tieneDNI && tieneNombre) {
+            const tieneDni = normalizedRow.some(
+              h => h.includes('DNI')
+            );
+
+            const tieneNombre = normalizedRow.some(
+              h =>
+                h.includes('APELLIDOS Y') &&
+                h.includes('NOMBRES')
+            );
+
+            if (
+              tieneGrado &&
+              tieneSeccion &&
+              tieneDni &&
+              tieneNombre
+            ) {
               headerRowIndex = i;
-
-              headers = row.map((header) =>
-                normalizarTexto(header)
-              );
-
+              headers = normalizedRow;
               break;
             }
           }
 
-          if (
-            headerRowIndex === -1 ||
-            headers.length === 0
-          ) {
+          if (headerRowIndex === -1) {
+            console.warn(
+              `No se encontró encabezado válido en la hoja: ${sheetName}`
+            );
             return;
           }
 
-          // ==========================================
-          // RECORRER FILAS DE ESTUDIANTES
-          // ==========================================
-
+          // Procesar filas
           for (
             let rowIndex = headerRowIndex + 1;
             rowIndex < rawRows.length;
@@ -122,343 +160,247 @@ export const parseExcelFile = (file) => {
           ) {
             const row = rawRows[rowIndex];
 
-            if (!row) continue;
-
-            const filaVacia = row.every(
-              (celda) =>
-                String(celda ?? '').trim() === ''
-            );
-
-            if (filaVacia) continue;
-
-            // ==========================================
-            // OBJETO ESTUDIANTE
-            // ==========================================
+            if (!row || row.join('').trim() === '') {
+              continue;
+            }
 
             const student = {
-              id:
-                typeof crypto !== 'undefined' &&
-                crypto.randomUUID
-                  ? crypto.randomUUID()
-                  : `${sheetName}-${rowIndex}-${Date.now()}`,
-
+              id: crypto.randomUUID(),
               hojaOrigen: sheetName,
 
               grado: '',
               seccion: '',
               nombres: '',
-              dni: '',
               fechaNacimiento: '',
+              dni: '',
 
-              // Datos del estudiante
+              // ESTUDIANTE
               domicilio: '',
               referencia: '',
               seguro: '',
 
-              // Padre
+              // PADRE
               padreNombre: '',
               padreVive: '',
-              padreCelular: '',
               padreDomicilio: '',
+              padreCelular: '',
 
-              // Madre
+              // MADRE
               madreNombre: '',
               madreVive: '',
+              madreViveConEstudiante: '',
               madreCelular: '',
               madreDomicilio: '',
 
-              // Apoderado
+              // APODERADO
               quienEsApoderado: '',
               apoderadoNombre: '',
+              apoderadoDomicilio: '',
               apoderadoParentesco: '',
               apoderadoCelular: ''
             };
 
             let hasValidData = false;
 
-            // ==========================================
-            // LEER CADA COLUMNA
-            // ==========================================
-
             headers.forEach((header, index) => {
-              const value = row[index];
+              const value = cleanValue(row[index]);
 
-              if (
-                value === undefined ||
-                value === null ||
-                String(value).trim() === ''
-              ) {
-                return;
-              }
+              if (!value) return;
 
               hasValidData = true;
 
-              const cleanKey = normalizarTexto(header);
-              const cleanValue = convertirValor(value);
+              // =========================
+              // DATOS DEL ESTUDIANTE
+              // =========================
 
-              // ========================================
-              // GRADO
-              // ========================================
-
-              if (
-                cleanKey === 'GRADO' ||
-                cleanKey.includes('GRADO DE ESTUDIO') ||
-                cleanKey.includes('NIVEL Y GRADO')
-              ) {
-                student.grado = cleanValue;
+              if (header === 'GRADO') {
+                student.grado = normalizeGrade(value, sheetName);
               }
 
-              // ========================================
-              // SECCIÓN
-              // ========================================
+              else if (header === 'SECCION') {
+                student.seccion = value;
+              }
 
               else if (
-                cleanKey === 'SECCION' ||
-                cleanKey.includes('SECCION')
+                header.includes(
+                  'APELLIDOS Y NOMBRES DE LA ESTUDIANTE'
+                )
               ) {
-                student.seccion = cleanValue;
+                student.nombres = value;
               }
-
-              // ========================================
-              // DNI
-              // ========================================
 
               else if (
-                cleanKey === 'DNI' ||
-                cleanKey.includes('N° DNI') ||
-                cleanKey.includes('Nº DNI') ||
-                cleanKey.includes('NUMERO DE DNI') ||
-                cleanKey.includes('DOCUMENTO DE IDENTIDAD')
+                header.includes('FECHA DE NACIMIENTO')
               ) {
-                student.dni = cleanValue;
+                student.fechaNacimiento = value;
               }
-
-              // ========================================
-              // FECHA DE NACIMIENTO
-              // ========================================
 
               else if (
-                cleanKey.includes('FECHA DE NACIMIENTO') ||
-                cleanKey.includes('F NACIMIENTO') ||
-                cleanKey.includes('NACIMIENTO')
+                header === 'N DNI' ||
+                header.includes('DNI')
               ) {
-                student.fechaNacimiento = cleanValue;
+                student.dni = value;
               }
 
-              // ========================================
-              // DIRECCIÓN DEL ESTUDIANTE
-              // ========================================
-              //
-              // IMPORTANTE:
-              // Esto se evalúa ANTES de REFERENCIA.
-              //
-              // DIRECCIÓN DE DOMICILIO ACTUAL
-              //      ↓
-              // student.domicilio
-              //
-              // ========================================
+              // =========================
+              // DOMICILIO DEL ESTUDIANTE
+              // =========================
 
               else if (
-                cleanKey ===
-                  'DIRECCION DE DOMICILIO ACTUAL' ||
-                cleanKey.includes(
-                  'DIRECCION DE DOMICILIO ACTUAL'
-                ) ||
-                cleanKey.includes('DOMICILIO ACTUAL')
+                header === 'DIRECCION DE DOMICILIO ACTUAL'
               ) {
-                student.domicilio = cleanValue;
+                student.domicilio = value;
               }
 
-              // ========================================
-              // DOMICILIO GENERAL DEL ESTUDIANTE
-              // ========================================
-
-              else if (
-                cleanKey.includes('DOMICILIO') &&
-                !cleanKey.includes('PADRE') &&
-                !cleanKey.includes('MADRE') &&
-                !cleanKey.includes('APODERADO')
-              ) {
-                student.domicilio = cleanValue;
-              }
-
-              // ========================================
+              // =========================
               // REFERENCIA
-              // ========================================
+              // =========================
 
               else if (
-                cleanKey === 'REFERENCIA' ||
-                cleanKey.includes('REFERENCIA')
+                header === 'REFERENCIA DEL DOMICILIO'
               ) {
-                student.referencia = cleanValue;
+                student.referencia = value;
               }
 
-              // ========================================
+              // =========================
               // SEGURO
-              // ========================================
+              // =========================
 
               else if (
-                cleanKey === 'SEGURO' ||
-                cleanKey.includes('SEGURO')
+                header === 'TIPO DE SEGURO'
               ) {
-                student.seguro = cleanValue;
+                student.seguro = value;
               }
 
-              // ========================================
+              // =========================
               // PADRE
-              // ========================================
+              // =========================
 
               else if (
-                cleanKey.includes('PADRE')
+                header.includes(
+                  'APELLIDOS Y NOMBRES DEL PADRE'
+                )
               ) {
-                if (
-                  cleanKey.includes('NOMBRE')
-                ) {
-                  student.padreNombre = cleanValue;
-                }
-
-                else if (
-                  cleanKey.includes('VIVE')
-                ) {
-                  student.padreVive = cleanValue;
-                }
-
-                else if (
-                  cleanKey.includes('CELULAR')
-                ) {
-                  student.padreCelular = cleanValue;
-                }
-
-                else if (
-                  cleanKey.includes('DOMICILIO')
-                ) {
-                  student.padreDomicilio = cleanValue;
-                }
+                student.padreNombre = value;
               }
 
-              // ========================================
+              else if (
+                header === 'VIVE? (PADRE)' ||
+                header.includes('VIVE') &&
+                header.includes('PADRE')
+              ) {
+                student.padreVive = value;
+              }
+
+              else if (
+                header ===
+                'DIRECCION DEL DOMICILIO ACTUAL (PADRE)'
+              ) {
+                student.padreDomicilio = value;
+              }
+
+              else if (
+                header.includes('N CELULAR') &&
+                header.includes('PADRE')
+              ) {
+                student.padreCelular = value;
+              }
+
+              // =========================
               // MADRE
-              // ========================================
+              // =========================
 
               else if (
-                cleanKey.includes('MADRE')
-              ) {
-                if (
-                  cleanKey.includes('NOMBRE')
-                ) {
-                  student.madreNombre = cleanValue;
-                }
-
-                else if (
-                  cleanKey.includes('VIVE')
-                ) {
-                  student.madreVive = cleanValue;
-                }
-
-                else if (
-                  cleanKey.includes('CELULAR')
-                ) {
-                  student.madreCelular = cleanValue;
-                }
-
-                else if (
-                  cleanKey.includes('DOMICILIO')
-                ) {
-                  student.madreDomicilio = cleanValue;
-                }
-              }
-
-              // ========================================
-              // QUIÉN ES EL APODERADO
-              // ========================================
-
-              else if (
-                cleanKey.includes(
-                  'QUIEN ES EL APODERADO'
-                ) ||
-                cleanKey.includes(
-                  'QUIEN ES EL APO'
+                header.includes(
+                  'APELLIDOS Y NOMBRES DE LA MADRE'
                 )
               ) {
-                student.quienEsApoderado = cleanValue;
+                student.madreNombre = value;
               }
 
-              // ========================================
-              // NOMBRE DEL APODERADO
-              // ========================================
-
               else if (
-                cleanKey.includes('APODERADO') &&
-                cleanKey.includes('NOMBRE')
-              ) {
-                student.apoderadoNombre = cleanValue;
-              }
-
-              // ========================================
-              // PARENTESCO
-              // ========================================
-
-              else if (
-                cleanKey.includes('PARENTESCO') ||
-                cleanKey.includes(
-                  'CON EL ESTUDIANTE'
-                ) ||
-                cleanKey.includes(
-                  'CON LA ESTUDIANTE'
-                )
-              ) {
-                student.apoderadoParentesco =
-                  cleanValue;
-              }
-
-              // ========================================
-              // CELULAR DEL APODERADO
-              // ========================================
-
-              else if (
-                cleanKey.includes('CELULAR') &&
-                cleanKey.includes('APODERADO')
-              ) {
-                student.apoderadoCelular =
-                  cleanValue;
-              }
-
-              // ========================================
-              // NOMBRES DEL ESTUDIANTE
-              // ========================================
-
-              else if (
+                header === 'VIVE? (MADRE)' ||
                 (
-                  cleanKey.includes('NOMBRE') ||
-                  cleanKey.includes('NOMBRES') ||
-                  cleanKey.includes('APELLIDOS')
-                ) &&
-                !cleanKey.includes('PADRE') &&
-                !cleanKey.includes('MADRE') &&
-                !cleanKey.includes('APODERADO')
+                  header.includes('VIVE') &&
+                  header.includes('MADRE') &&
+                  !header.includes('CON LA ESTUDIANTE')
+                )
               ) {
-                student.nombres = cleanValue;
+                student.madreVive = value;
+              }
+
+              else if (
+                header.includes(
+                  'VIVE CON LA ESTUDIANTE'
+                )
+              ) {
+                student.madreViveConEstudiante = value;
+              }
+
+              else if (
+                header.includes('N CELULAR') &&
+                header.includes('MADRE')
+              ) {
+                student.madreCelular = value;
+              }
+
+              else if (
+                header ===
+                'DIRECCION DEL DOMICILIO ACTUAL (MADRE)'
+              ) {
+                student.madreDomicilio = value;
+              }
+
+              // =========================
+              // APODERADO
+              // =========================
+
+              else if (
+                header === 'QUIEN ES EL APODERADO?'
+              ) {
+                student.quienEsApoderado = value;
+              }
+
+              else if (
+                header.includes(
+                  'APELLIDOS Y NOMBRES (SI EL APODERADO NO ES PAPA NI MAMA)'
+                )
+              ) {
+                student.apoderadoNombre = value;
+              }
+
+              else if (
+                header ===
+                'DIRECCION ACTUAL (APODERADO)'
+              ) {
+                student.apoderadoDomicilio = value;
+              }
+
+              else if (
+                header === 'RELACION CON LA ESTUDIANTE'
+              ) {
+                student.apoderadoParentesco = value;
+              }
+
+              else if (
+                header.includes('N CELULAR') &&
+                header.includes('APODERADO')
+              ) {
+                student.apoderadoCelular = value;
               }
             });
 
-            // ==========================================
-            // SI NO HAY GRADO, USAR EL NOMBRE DE LA HOJA
-            // ==========================================
-
+            // Si el grado no estaba en la fila,
+            // usamos el nombre de la hoja.
             if (!student.grado) {
-              student.grado = sheetName;
+              student.grado = normalizeGrade('', sheetName);
             }
 
-            // ==========================================
-            // GUARDAR ESTUDIANTE
-            // ==========================================
-
+            // Guardar solamente filas que realmente
+            // correspondan a estudiantes.
             if (
               hasValidData &&
-              (
-                student.nombres ||
-                student.dni
-              )
+              (student.nombres || student.dni)
             ) {
               allStudents.push(student);
             }
@@ -468,6 +410,11 @@ export const parseExcelFile = (file) => {
         console.log(
           '✅ Estudiantes procesados:',
           allStudents.length
+        );
+
+        console.log(
+          '📍 Ejemplo de estudiante:',
+          allStudents[0]
         );
 
         resolve(allStudents);
@@ -483,11 +430,6 @@ export const parseExcelFile = (file) => {
     };
 
     reader.onerror = (error) => {
-      console.error(
-        '❌ Error leyendo archivo:',
-        error
-      );
-
       reject(error);
     };
 

@@ -19,21 +19,16 @@ export default function StudentModal({
     >
       <div
         className="modal-content"
-        onClick={(e) =>
-          e.stopPropagation()
-        }
+        onClick={(e) => e.stopPropagation()}
       >
 
-        {/* ========================================
-            CABECERA
-        ======================================== */}
+        {/* ================= HEADER ================= */}
 
         <div className="modal-header">
 
           <div>
             <h2>
-              {student.nombres ||
-                'Sin Nombre'}
+              {student.nombres || 'Sin Nombre'}
             </h2>
 
             <p>
@@ -46,7 +41,6 @@ export default function StudentModal({
           <button
             className="close-btn"
             onClick={onClose}
-            aria-label="Cerrar"
           >
             <X size={20} />
           </button>
@@ -56,9 +50,9 @@ export default function StudentModal({
 
         <div className="modal-body">
 
-          {/* ========================================
-              DATOS DEL ESTUDIANTE
-          ======================================== */}
+          {/* ================================================= */}
+          {/* DATOS DEL ESTUDIANTE */}
+          {/* ================================================= */}
 
           <div className="info-section">
 
@@ -73,10 +67,7 @@ export default function StudentModal({
 
             <div className="info-grid">
 
-              {/* DNI */}
-
               <div className="info-item">
-
                 <span className="label">
                   DNI
                 </span>
@@ -84,82 +75,62 @@ export default function StudentModal({
                 <span className="value">
                   {student.dni || '-'}
                 </span>
-
               </div>
 
 
-              {/* FECHA DE NACIMIENTO */}
-
               <div className="info-item">
-
                 <span className="label">
                   F. Nacimiento
                 </span>
 
                 <span className="value">
-                  {student.fechaNacimiento ||
-                    '-'}
+                  {student.fechaNacimiento || '-'}
                 </span>
-
               </div>
 
 
-              {/* ==================================
-                  DIRECCIÓN
-              ================================== */}
+              {/* DIRECCIÓN DEL ESTUDIANTE */}
 
               <div
                 className="info-item"
                 style={{
-                  gridColumn:
-                    '1 / -1'
+                  gridColumn: '1 / -1'
                 }}
               >
-
                 <span className="label">
-                  Domicilio
+                  Dirección de domicilio actual
                 </span>
 
                 <span className="value">
-                  {student.domicilio ||
-                    '-'}
+                  {student.domicilio || '-'}
                 </span>
-
               </div>
 
 
-              {/* ==================================
-                  REFERENCIA
-              ================================== */}
+              {/* REFERENCIA */}
 
               <div
                 className="info-item"
                 style={{
-                  gridColumn:
-                    '1 / -1'
+                  gridColumn: '1 / -1'
                 }}
               >
-
                 <span className="label">
-                  Referencia
+                  Referencia del domicilio
                 </span>
 
                 <span className="value">
-                  {student.referencia ||
-                    '-'}
+                  {student.referencia || '-'}
                 </span>
-
               </div>
 
 
-              {/* ==================================
-                  SEGURO
-              ================================== */}
+              {/* SEGURO */}
 
               <div className="info-item">
 
                 <span className="label">
-                  Seguro
+                  Tipo de seguro
                 </span>
 
                 <span
@@ -169,20 +140,18 @@ export default function StudentModal({
                     width: 'fit-content'
                   }}
                 >
-                  {student.seguro ||
-                    'Ninguno'}
+                  {student.seguro || 'Ninguno'}
                 </span>
 
               </div>
 
             </div>
-
           </div>
 
 
-          {/* ========================================
-              DATOS DEL PADRE
-          ======================================== */}
+          {/* ================================================= */}
+          {/* DATOS DEL PADRE */}
+          {/* ================================================= */}
 
           <div className="info-section">
 
@@ -197,29 +166,25 @@ export default function StudentModal({
 
             <div className="info-grid">
 
-              {/* Nombre */}
+              {/* NOMBRE */}
 
               <div
                 className="info-item"
                 style={{
-                  gridColumn:
-                    '1 / -1'
+                  gridColumn: '1 / -1'
                 }}
               >
-
                 <span className="label">
                   Nombre
                 </span>
 
                 <span className="value">
-                  {student.padreNombre ||
-                    '-'}
+                  {student.padreNombre || '-'}
                 </span>
-
               </div>
 
 
-              {/* Vive */}
+              {/* VIVE */}
 
               <div className="info-item">
 
@@ -228,14 +193,13 @@ export default function StudentModal({
                 </span>
 
                 <span className="value">
-                  {student.padreVive ||
-                    '-'}
+                  {student.padreVive || '-'}
                 </span>
 
               </div>
 
 
-              {/* Celular */}
+              {/* CELULAR */}
 
               <div className="info-item">
 
@@ -244,42 +208,36 @@ export default function StudentModal({
                 </span>
 
                 <span className="value">
-                  {student.padreCelular ||
-                    '-'}
+                  {student.padreCelular || '-'}
                 </span>
 
               </div>
 
 
-              {/* Domicilio */}
+              {/* DIRECCIÓN PADRE */}
 
               <div
                 className="info-item"
                 style={{
-                  gridColumn:
-                    '1 / -1'
+                  gridColumn: '1 / -1'
                 }}
               >
-
                 <span className="label">
-                  Domicilio
+                  Dirección del domicilio actual
                 </span>
 
                 <span className="value">
-                  {student.padreDomicilio ||
-                    '-'}
+                  {student.padreDomicilio || '-'}
                 </span>
-
               </div>
 
             </div>
-
           </div>
 
 
-          {/* ========================================
-              DATOS DE LA MADRE
-          ======================================== */}
+          {/* ================================================= */}
+          {/* DATOS DE LA MADRE */}
+          {/* ================================================= */}
 
           <div className="info-section">
 
@@ -294,29 +252,25 @@ export default function StudentModal({
 
             <div className="info-grid">
 
-              {/* Nombre */}
+              {/* NOMBRE */}
 
               <div
                 className="info-item"
                 style={{
-                  gridColumn:
-                    '1 / -1'
+                  gridColumn: '1 / -1'
                 }}
               >
-
                 <span className="label">
                   Nombre
                 </span>
 
                 <span className="value">
-                  {student.madreNombre ||
-                    '-'}
+                  {student.madreNombre || '-'}
                 </span>
-
               </div>
 
 
-              {/* Vive */}
+              {/* VIVE */}
 
               <div className="info-item">
 
@@ -325,14 +279,28 @@ export default function StudentModal({
                 </span>
 
                 <span className="value">
-                  {student.madreVive ||
-                    '-'}
+                  {student.madreVive || '-'}
                 </span>
 
               </div>
 
 
-              {/* Celular */}
+              {/* VIVE CON ESTUDIANTE */}
+
+              <div className="info-item">
+
+                <span className="label">
+                  ¿Vive con la estudiante?
+                </span>
+
+                <span className="value">
+                  {student.madreViveConEstudiante || '-'}
+                </span>
+
+              </div>
+
+
+              {/* CELULAR */}
 
               <div className="info-item">
 
@@ -341,42 +309,36 @@ export default function StudentModal({
                 </span>
 
                 <span className="value">
-                  {student.madreCelular ||
-                    '-'}
+                  {student.madreCelular || '-'}
                 </span>
 
               </div>
 
 
-              {/* Domicilio */}
+              {/* DIRECCIÓN MADRE */}
 
               <div
                 className="info-item"
                 style={{
-                  gridColumn:
-                    '1 / -1'
+                  gridColumn: '1 / -1'
                 }}
               >
-
                 <span className="label">
-                  Domicilio
+                  Dirección del domicilio actual
                 </span>
 
                 <span className="value">
-                  {student.madreDomicilio ||
-                    '-'}
+                  {student.madreDomicilio || '-'}
                 </span>
-
               </div>
 
             </div>
-
           </div>
 
 
-          {/* ========================================
-              DATOS DEL APODERADO
-          ======================================== */}
+          {/* ================================================= */}
+          {/* DATOS DEL APODERADO */}
+          {/* ================================================= */}
 
           <div className="info-section">
 
@@ -391,7 +353,7 @@ export default function StudentModal({
 
             <div className="info-grid">
 
-              {/* Quién es */}
+              {/* QUIÉN ES */}
 
               <div className="info-item">
 
@@ -400,86 +362,90 @@ export default function StudentModal({
                 </span>
 
                 <span className="value">
-                  {student.quienEsApoderado ||
-                    '-'}
+                  {student.quienEsApoderado || '-'}
                 </span>
 
               </div>
 
 
-              {/* Parentesco */}
+              {/* PARENTESCO */}
 
               <div className="info-item">
 
                 <span className="label">
-                  Parentesco
+                  Relación con la estudiante
                 </span>
 
                 <span
                   className="value badge badge-secondary"
                   style={{
-                    display:
-                      'inline-block',
-                    width:
-                      'fit-content'
+                    display: 'inline-block',
+                    width: 'fit-content'
                   }}
                 >
-                  {student.apoderadoParentesco ||
-                    '-'}
+                  {student.apoderadoParentesco || '-'}
                 </span>
 
               </div>
 
 
-              {/* Nombre del apoderado */}
+              {/* NOMBRE APODERADO */}
 
               <div
                 className="info-item"
                 style={{
-                  gridColumn:
-                    '1 / -1'
+                  gridColumn: '1 / -1'
                 }}
               >
-
                 <span className="label">
                   Nombre del Apoderado Actual
                 </span>
 
                 <span className="value">
-                  {student.apoderadoNombre ||
-                    '-'}
+                  {student.apoderadoNombre || '-'}
                 </span>
-
               </div>
 
 
-              {/* Celular */}
+              {/* DIRECCIÓN APODERADO */}
 
               <div
                 className="info-item"
                 style={{
-                  gridColumn:
-                    '1 / -1'
+                  gridColumn: '1 / -1'
                 }}
               >
+                <span className="label">
+                  Dirección actual del apoderado
+                </span>
 
+                <span className="value">
+                  {student.apoderadoDomicilio || '-'}
+                </span>
+              </div>
+
+
+              {/* CELULAR */}
+
+              <div
+                className="info-item"
+                style={{
+                  gridColumn: '1 / -1'
+                }}
+              >
                 <span className="label">
                   Celular del Apoderado
                 </span>
 
                 <span className="value">
-                  {student.apoderadoCelular ||
-                    '-'}
+                  {student.apoderadoCelular || '-'}
                 </span>
-
               </div>
 
             </div>
-
           </div>
 
         </div>
-
       </div>
     </div>
   );

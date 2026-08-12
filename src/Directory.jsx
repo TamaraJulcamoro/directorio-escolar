@@ -72,65 +72,182 @@ export default function Directory({ students }) {
         👉 <span><strong>Tip:</strong> Haz clic sobre cualquier estudiante de la tabla para ver su ficha completa (Teléfonos, datos de los Padres, Dirección, etc.).</span>
       </div>
 
-      <div className="table-container">
-        {filteredStudents.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Grado</th>
-                <th>Sección</th>
-                <th>Apellidos y Nombres</th>
-                <th>DNI</th>
-                <th>Apoderado</th>
-                <th>Celular Principal</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map((student) => (
-                <tr key={student.id} onClick={() => setSelectedStudent(student)}>
-                  <td><span className="badge badge-primary">{student.grado || '-'}</span></td>
-                  <td>{student.seccion || '-'}</td>
-                  <td style={{ fontWeight: 500, color: 'var(--color-dark)' }}>{student.nombres || '-'}</td>
-                  <td>{student.dni || '-'}</td>
-                  <td>
-                    {student.apoderadoNombre ? 
-                      student.apoderadoNombre : 
-                      (student.quienEsApoderado || '-')
-                    }
-                  </td>
-                  <td>
-                    {student.apoderadoCelular || student.madreCelular || student.padreCelular || '-'}
-                  </td>
-                  <td>
-                    <button 
-                      style={{ 
-                        backgroundColor: 'white', 
-                        color: 'var(--color-primary)', 
-                        border: '1px solid var(--color-primary)', 
-                        padding: '0.4rem 0.75rem', 
-                        borderRadius: 'var(--radius-md)',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        fontSize: '0.75rem',
-                        boxShadow: 'var(--shadow-sm)'
-                      }}
-                    >
-                      Ver Ficha 👀
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="empty-state">
-            <Users className="icon" />
-            <h3 style={{ color: 'var(--color-dark)', marginBottom: '0.5rem' }}>No hay resultados</h3>
-            <p>No se encontraron estudiantes que coincidan con la búsqueda.</p>
+    {/* VISTA PC */}
+<div className="table-container desktop-directory">
+  {filteredStudents.length > 0 ? (
+    <table>
+      <thead>
+        <tr>
+          <th>Grado</th>
+          <th>Sección</th>
+          <th>Apellidos y Nombres</th>
+          <th>DNI</th>
+          <th>Apoderado</th>
+          <th>Celular Principal</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {filteredStudents.map((student) => (
+          <tr
+            key={student.id}
+            onClick={() => setSelectedStudent(student)}
+          >
+            <td>
+              <span className="badge badge-primary">
+                {student.grado || '-'}
+              </span>
+            </td>
+
+            <td>{student.seccion || '-'}</td>
+
+            <td style={{
+              fontWeight: 500,
+              color: 'var(--color-dark)'
+            }}>
+              {student.nombres || '-'}
+            </td>
+
+            <td>{student.dni || '-'}</td>
+
+            <td>
+              {student.apoderadoNombre ||
+                student.quienEsApoderado ||
+                '-'}
+            </td>
+
+            <td>
+              {student.apoderadoCelular ||
+                student.madreCelular ||
+                student.padreCelular ||
+                '-'}
+            </td>
+
+            <td>
+              <button
+                className="mobile-card-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedStudent(student);
+                }}
+              >
+                Ver Ficha 👀
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : (
+    <div className="empty-state">
+      <Users className="icon" />
+      <h3>No hay resultados</h3>
+      <p>
+        No se encontraron estudiantes que coincidan con la búsqueda.
+      </p>
+    </div>
+  )}
+</div>
+
+
+{/* VISTA CELULAR */}
+<div className="mobile-directory">
+  {filteredStudents.length > 0 ? (
+    <div className="student-cards">
+
+      {filteredStudents.map((student) => (
+        <div
+          className="student-card"
+          key={student.id}
+          onClick={() => setSelectedStudent(student)}
+        >
+
+          <div className="student-card-header">
+
+            <div className="student-card-name">
+              {student.nombres || 'Sin nombre'}
+            </div>
+
+            <span className="badge badge-primary">
+              {student.grado || '-'}
+            </span>
+
           </div>
-        )}
-      </div>
+
+          <div className="student-card-info">
+
+            <div>
+              <span className="student-label">
+                Sección
+              </span>
+
+              <strong>
+                {student.seccion || '-'}
+              </strong>
+            </div>
+
+            <div>
+              <span className="student-label">
+                DNI
+              </span>
+
+              <strong>
+                {student.dni || '-'}
+              </strong>
+            </div>
+
+            <div className="student-card-full">
+              <span className="student-label">
+                Apoderado
+              </span>
+
+              <strong>
+                {student.apoderadoNombre ||
+                  student.quienEsApoderado ||
+                  '-'}
+              </strong>
+            </div>
+
+            <div className="student-card-full">
+              <span className="student-label">
+                Celular
+              </span>
+
+              <strong>
+                {student.apoderadoCelular ||
+                  student.madreCelular ||
+                  student.padreCelular ||
+                  '-'}
+              </strong>
+            </div>
+
+          </div>
+
+          <button
+            className="student-view-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedStudent(student);
+            }}
+          >
+            Ver ficha completa →
+          </button>
+
+        </div>
+      ))}
+
+    </div>
+  ) : (
+    <div className="empty-state">
+      <Users className="icon" />
+      <h3>No hay resultados</h3>
+      <p>
+        No se encontraron estudiantes.
+      </p>
+    </div>
+  )}
+</div>
 
       {selectedStudent && (
         <StudentModal 

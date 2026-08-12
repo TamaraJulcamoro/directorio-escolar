@@ -442,3 +442,267 @@ tbody tr:hover {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
+
+/* =====================================================
+   DIRECTORIO RESPONSIVE PARA CELULAR
+   ===================================================== */
+
+/* Por defecto: celular oculto */
+.mobile-directory {
+  display: none;
+}
+
+.mobile-card-button {
+  background: white;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+
+/* =====================================================
+   CELULARES
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+  .app-container {
+    width: 100%;
+    max-width: none;
+    padding: 0.75rem;
+  }
+
+  /* ---------- HEADER ---------- */
+
+  .header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .header-title {
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .header-title .icon {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  .header-title h1 {
+    font-size: 1.15rem !important;
+    white-space: nowrap;
+  }
+
+  .header-title p {
+    font-size: 0.65rem !important;
+  }
+
+  /* Botones del encabezado */
+
+  .header > div:last-child {
+    gap: 0.35rem !important;
+  }
+
+  .header .btn {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.6rem;
+  }
+
+  .header .btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+
+  /* ---------- BUSCADOR Y FILTROS ---------- */
+
+  .controls-bar {
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .search-input-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .search-input {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  }
+
+  .select-input {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 0.9rem;
+    padding: 0.75rem 2rem 0.75rem 0.75rem;
+  }
+
+  .controls-bar > div:last-child {
+    margin-left: 0 !important;
+    justify-content: center;
+    width: 100%;
+    font-size: 0.8rem !important;
+  }
+
+
+  /* ---------- MENSAJE TIP ---------- */
+
+  .controls-bar + div {
+    font-size: 0.78rem !important;
+    padding: 0.7rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+
+  /* ---------- TABLA ---------- */
+
+  .desktop-directory {
+    display: none;
+  }
+
+  /* ---------- TARJETAS ---------- */
+
+  .mobile-directory {
+    display: block;
+  }
+
+  .student-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .student-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.15s ease,
+                box-shadow 0.15s ease;
+  }
+
+  .student-card:active {
+    transform: scale(0.99);
+    box-shadow: var(--shadow-md);
+  }
+
+  .student-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .student-card-name {
+    color: var(--color-dark);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    flex: 1;
+  }
+
+  .student-card-header .badge {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.55rem;
+  }
+
+  .student-card-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    padding: 0.85rem 0;
+  }
+
+  .student-card-info > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .student-card-full {
+    grid-column: 1 / -1;
+  }
+
+  .student-label {
+    color: var(--color-text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .student-card-info strong {
+    color: var(--color-text);
+    font-size: 0.82rem;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .student-view-button {
+    width: 100%;
+    border: 1px solid var(--color-primary);
+    background: white;
+    color: var(--color-primary-hover);
+    border-radius: var(--radius-md);
+    padding: 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .student-view-button:active {
+    background: rgba(14, 165, 233, 0.1);
+  }
+
+
+  /* ---------- MODAL EN CELULAR ---------- */
+
+  .modal-content {
+    max-width: none;
+    width: 100%;
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .modal-body {
+    padding: 0.9rem;
+    gap: 0.8rem;
+  }
+
+  .info-section {
+    padding: 1rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .info-item[style*="grid-column"] {
+    grid-column: auto !important;
+  }
+
+}

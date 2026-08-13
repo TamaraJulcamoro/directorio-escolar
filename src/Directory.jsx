@@ -403,9 +403,7 @@ export default function Directory({ students }) {
                         'Sin nombre'}
                     </div>
 
-                    <span className="badge badge-primary">
-                      {student.grado || '-'}
-                    </span>
+                    <span className="badge badge-primary">{student.seccion || '-'}</span>
 
                   </div>
 

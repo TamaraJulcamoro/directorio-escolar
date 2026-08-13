@@ -601,13 +601,14 @@ tbody tr:hover {
   }
 
   .student-card-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--color-border);
-  }
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: nowrap;     /* Evita que los elementos se envuelvan */
+}
 
   .student-card-name {
     color: var(--color-dark);
@@ -618,10 +619,12 @@ tbody tr:hover {
   }
 
   .student-card-header .badge {
-    flex-shrink: 0;
-    font-size: 0.7rem;
-    padding: 0.25rem 0.55rem;
-  }
+  flex-shrink: 0;        /* Evita que se encoja */
+  min-width: 30px;       /* Ancho mínimo para la sección */
+  text-align: center;
+  white-space: nowrap;   /* Evita que el texto se divida en varias líneas */
+  overflow: visible;     /* Asegura que el texto no se oculte */
+}
 
   .student-card-info {
     display: grid;

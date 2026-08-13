@@ -80,6 +80,19 @@ const normalizeGrade = (value, sheetName = '') => {
 };
 
 /**
+ * Valida si un valor es una sección válida (una sola letra mayúscula o número romano).
+ */
+const isValidSeccion = (value) => {
+  if (!value) return false;
+  const trimmed = String(value).trim();
+  // Una sola letra mayúscula (A, B, C, ... Z)
+  if (/^[A-Z]$/i.test(trimmed)) return true;
+  // Números romanos simples (I, II, III, IV, V, VI, VII, VIII, IX, X)
+  if (/^[IVXLCDM]+$/i.test(trimmed) && trimmed.length <= 4) return true;
+  return false;
+};
+
+/**
  * Función principal para parsear el archivo Excel.
  */
 export const parseExcelFile = (file) => {
@@ -154,9 +167,15 @@ export const parseExcelFile = (file) => {
               if (header.includes('GRADO')) {
                 student.grado = normalizeGrade(value, sheetName);
               }
-              // --- SECCION ---
+              // --- SECCION (con validación extra) ---
               else if (header.includes('SECCION')) {
-                student.seccion = value;
+                // Solo asignamos si el valor es una sección válida
+                if (isValidSeccion(value)) {
+                  student.seccion = value;
+                } else {
+                  // Si no es válido, lo dejamos vacío (o podríamos intentar limpiarlo)
+                  student.seccion = '';
+                }
               }
               // --- NOMBRES ESTUDIANTE ---
               else if (header.includes('APELLIDOS Y NOMBRES DE LA ESTUDIANTE')) {
@@ -235,6 +254,15 @@ export const parseExcelFile = (file) => {
             // Si el grado no se detectó, usar el nombre de la hoja
             if (!student.grado) {
               student.grado = normalizeGrade('', sheetName);
+            }
+
+            // Si la sección sigue vacía, intentar extraerla del nombre de la hoja o de otra columna
+            if (!student.seccion) {
+              // Opcional: si la hoja se llama "Primero A", "Primero B", etc., extraer la sección
+              const sheetParts = sheetName.split(' ');
+              if (sheetParts.length > 1 && isValidSeccion(sheetParts[sheetParts.length - 1])) {
+                student.seccion = sheetParts[sheetParts.length - 1];
+              }
             }
 
             if (hasValidData && (student.nombres || student.dni)) {

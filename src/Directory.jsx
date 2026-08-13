@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Users } from 'lucide-react';
 import StudentModal from './StudentModal';
-
+import { cleanPhoneNumber } from '../utils/phoneUtils';
 export default function Directory({ students }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrado, setFilterGrado] = useState('');
@@ -320,12 +320,13 @@ export default function Directory({ students }) {
                         '-'}
                     </td>
 
-                    <td>
-                      {student.apoderadoCelular ||
-                        student.madreCelular ||
-                        student.padreCelular ||
-                        '-'}
-                    </td>
+                  <td>
+  {student.apoderadoCelular || student.madreCelular || student.padreCelular ? (
+    <a href={`tel:${cleanPhoneNumber(student.apoderadoCelular || student.madreCelular || student.padreCelular)}`} style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
+      {student.apoderadoCelular || student.madreCelular || student.padreCelular}
+    </a>
+  ) : '-'}
+</td>
 
                     <td>
 
@@ -443,20 +444,16 @@ export default function Directory({ students }) {
 
                     </div>
 
-                    <div className="student-card-full">
-
-                      <span className="student-label">
-                        Celular
-                      </span>
-
-                      <strong>
-                        {student.apoderadoCelular ||
-                          student.madreCelular ||
-                          student.padreCelular ||
-                          '-'}
-                      </strong>
-
-                    </div>
+                  <div className="student-card-full">
+  <span className="student-label">Celular</span>
+  <strong>
+    {student.apoderadoCelular || student.madreCelular || student.padreCelular ? (
+      <a href={`tel:${cleanPhoneNumber(student.apoderadoCelular || student.madreCelular || student.padreCelular)}`} style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
+        {student.apoderadoCelular || student.madreCelular || student.padreCelular}
+      </a>
+    ) : '-'}
+  </strong>
+</div>
 
                   </div>
 

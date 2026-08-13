@@ -619,11 +619,11 @@ tbody tr:hover {
   }
 
   .student-card-header .badge {
-  flex-shrink: 0;        /* Evita que se encoja */
-  min-width: 30px;       /* Ancho mínimo para la sección */
+  flex-shrink: 0;
+  min-width: 30px;
   text-align: center;
-  white-space: nowrap;   /* Evita que el texto se divida en varias líneas */
-  overflow: visible;     /* Asegura que el texto no se oculte */
+  white-space: nowrap;
+  overflow: visible;
 }
 
   .student-card-info {

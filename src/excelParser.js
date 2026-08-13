@@ -263,6 +263,7 @@ export const parseExcelFile = (file) => {
               if (sheetParts.length > 1 && isValidSeccion(sheetParts[sheetParts.length - 1])) {
                 student.seccion = sheetParts[sheetParts.length - 1];
               }
+              student.seccion = get(idxSeccion).trim().charAt(0);
             }
 
             if (hasValidData && (student.nombres || student.dni)) {

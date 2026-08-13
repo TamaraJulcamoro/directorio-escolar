@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Users } from 'lucide-react';
 import StudentModal from './StudentModal';
 import { cleanPhoneNumber } from '../utils/phoneUtils';
+
 export default function Directory({ students }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGrado, setFilterGrado] = useState('');
@@ -66,7 +67,6 @@ export default function Directory({ students }) {
 
   // ==========================================
   // SECCIONES
-  // A, B, C, D...
   // ==========================================
 
   const secciones = useMemo(() => {
@@ -137,6 +137,25 @@ export default function Directory({ students }) {
     filterGrado,
     filterSeccion
   ]);
+
+  // ==========================================
+  // COMPONENTE PARA ENLACE TELÉFONICO
+  // ==========================================
+
+  const renderPhoneLink = (phone) => {
+    if (!phone) return <span>-</span>;
+    const cleaned = cleanPhoneNumber(phone);
+    return (
+      <a
+        href={`tel:${cleaned}`}
+        className="phone-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {phone}
+      </a>
+    );
+  };
 
   return (
     <div>
@@ -320,13 +339,13 @@ export default function Directory({ students }) {
                         '-'}
                     </td>
 
-                  <td>
-  {student.apoderadoCelular || student.madreCelular || student.padreCelular ? (
-    <a href={`tel:${cleanPhoneNumber(student.apoderadoCelular || student.madreCelular || student.padreCelular)}`} style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
-      {student.apoderadoCelular || student.madreCelular || student.padreCelular}
-    </a>
-  ) : '-'}
-</td>
+                    <td>
+                      {renderPhoneLink(
+                        student.apoderadoCelular ||
+                        student.madreCelular ||
+                        student.padreCelular
+                      )}
+                    </td>
 
                     <td>
 
@@ -404,7 +423,10 @@ export default function Directory({ students }) {
                         'Sin nombre'}
                     </div>
 
-                    <span className="badge badge-primary">{student.seccion || '-'}</span>
+                    {/* MOSTRAMOS SECCIÓN, NO GRADO */}
+                    <span className="badge badge-primary">
+                      {student.seccion || '-'}
+                    </span>
 
                   </div>
 
@@ -444,16 +466,16 @@ export default function Directory({ students }) {
 
                     </div>
 
-                  <div className="student-card-full">
-  <span className="student-label">Celular</span>
-  <strong>
-    {student.apoderadoCelular || student.madreCelular || student.padreCelular ? (
-      <a href={`tel:${cleanPhoneNumber(student.apoderadoCelular || student.madreCelular || student.padreCelular)}`} style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
-        {student.apoderadoCelular || student.madreCelular || student.padreCelular}
-      </a>
-    ) : '-'}
-  </strong>
-</div>
+                    <div className="student-card-full">
+                      <span className="student-label">Celular</span>
+                      <strong>
+                        {renderPhoneLink(
+                          student.apoderadoCelular ||
+                          student.madreCelular ||
+                          student.padreCelular
+                        )}
+                      </strong>
+                    </div>
 
                   </div>
 

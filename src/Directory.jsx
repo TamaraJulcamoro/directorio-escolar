@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Users } from 'lucide-react';
 import StudentModal from './StudentModal';
-import { cleanPhoneNumber } from '../utils/phoneUtils';
+import { cleanPhoneNumber } from './utils/phoneUtils';
 
 export default function Directory({ students }) {
   const [searchTerm, setSearchTerm] = useState('');

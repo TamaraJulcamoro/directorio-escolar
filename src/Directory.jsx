@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Users, Phone, MessageCircle } from 'lucide-react';
 import StudentModal from './StudentModal';
 import { cleanPhoneNumber } from './utils/phoneUtils';
+import { normalizeText } from './utils/textUtils';
 
 export default function Directory({ students }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,32 +90,20 @@ export default function Directory({ students }) {
   }, [students]);
 
   // ==========================================
-  // FILTRAR ESTUDIANTES
+  // FILTRAR ESTUDIANTES (CON NORMALIZACIÓN)
   // ==========================================
 
   const filteredStudents = useMemo(() => {
-    const textoBusqueda =
-      searchTerm.toLowerCase().trim();
+    const searchNormalized = normalizeText(searchTerm);
 
     return students.filter((student) => {
-      const nombres = String(
-        student.nombres || ''
-      ).toLowerCase();
+      const nombresNormalized = normalizeText(student.nombres);
+      const dniNormalized = normalizeText(student.dni);
 
-      const dni = String(
-        student.dni || ''
-      );
+      const matchName = nombresNormalized.includes(searchNormalized);
+      const matchDNI = dniNormalized.includes(searchNormalized);
 
-      const matchName =
-        nombres.includes(textoBusqueda);
-
-      const matchDNI =
-        dni.includes(textoBusqueda);
-
-      const matchSearch =
-        !textoBusqueda ||
-        matchName ||
-        matchDNI;
+      const matchSearch = !searchTerm || matchName || matchDNI;
 
       const matchGrado =
         filterGrado
@@ -140,7 +129,7 @@ export default function Directory({ students }) {
   ]);
 
   // ==========================================
-  // COMPONENTE PARA ENLACE TELÉFONICO
+  // COMPONENTE PARA ENLACE TELÉFONICO (con popup)
   // ==========================================
 
   const renderPhoneLink = (phone) => {
@@ -160,10 +149,12 @@ export default function Directory({ students }) {
     );
   };
 
-  // Cerrar popup
+  // ==========================================
+  // FUNCIONES DEL POPUP
+  // ==========================================
+
   const closePopup = () => setContactPopup(null);
 
-  // Acciones
   const handleCall = () => {
     if (contactPopup?.phone) {
       window.location.href = `tel:${contactPopup.phone}`;
@@ -178,6 +169,10 @@ export default function Directory({ students }) {
       closePopup();
     }
   };
+
+  // ==========================================
+  // RENDER
+  // ==========================================
 
   return (
     <div>
@@ -208,7 +203,7 @@ export default function Directory({ students }) {
       </div>
 
       {/* ========================================
-          CONTROLES
+          CONTROLES (búsqueda y filtros)
       ======================================== */}
 
       <div className="controls-bar">
@@ -220,7 +215,7 @@ export default function Directory({ students }) {
           <input
             type="text"
             className="search-input"
-            placeholder="Buscar por nombre o DNI..."
+            placeholder="Buscar por nombre o DNI... (sin tildes)"
             value={searchTerm}
             onChange={(e) =>
               setSearchTerm(e.target.value)
@@ -323,7 +318,7 @@ export default function Directory({ students }) {
       </div>
 
       {/* ========================================
-          VISTA PC
+          VISTA PC (TABLA)
       ======================================== */}
 
       <div className="table-container desktop-directory">
@@ -443,7 +438,7 @@ export default function Directory({ students }) {
       </div>
 
       {/* ========================================
-          VISTA CELULAR
+          VISTA CELULAR (TARJETAS)
       ======================================== */}
 
       <div className="mobile-directory">
@@ -470,7 +465,6 @@ export default function Directory({ students }) {
                         'Sin nombre'}
                     </div>
 
-                    {/* MOSTRAMOS SECCIÓN, NO GRADO */}
                     <span className="badge badge-primary">
                       {student.seccion || '-'}
                     </span>
@@ -568,7 +562,7 @@ export default function Directory({ students }) {
       </div>
 
       {/* ========================================
-          POPUP DE CONTACTO
+          POPUP DE CONTACTO (Llamar / WhatsApp)
       ======================================== */}
 
       {contactPopup && (
@@ -608,7 +602,7 @@ export default function Directory({ students }) {
       )}
 
       {/* ========================================
-          MODAL
+          MODAL (Ficha completa)
       ======================================== */}
 
       {selectedStudent && (

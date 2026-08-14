@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, Phone, MessageCircle } from 'lucide-react';
 import StudentModal from './StudentModal';
 import { cleanPhoneNumber } from './utils/phoneUtils';
 
@@ -8,6 +8,7 @@ export default function Directory({ students }) {
   const [filterGrado, setFilterGrado] = useState('');
   const [filterSeccion, setFilterSeccion] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [contactPopup, setContactPopup] = useState(null); // { phone, display }
 
   // ==========================================
   // ORDEN CORRECTO DE LOS GRADOS
@@ -139,26 +140,78 @@ export default function Directory({ students }) {
   ]);
 
   // ==========================================
-  // COMPONENTE PARA ENLACE TELÉFONICO
+  // MANEJADORES DEL POPUP DE CONTACTO
+  // ==========================================
+
+  const closePopup = () => setContactPopup(null);
+
+  const handleCall = () => {
+    if (contactPopup?.phone) {
+      window.location.href = `tel:${contactPopup.phone}`;
+      closePopup();
+    }
+  };
+
+  const handleWhatsApp = () => {
+    if (contactPopup?.phone) {
+      const waNumber = contactPopup.phone.replace('+', '');
+      window.open(`https://wa.me/${waNumber}`, '_blank');
+      closePopup();
+    }
+  };
+
+  // ==========================================
+  // RENDERIZAR ENLACE TELEFÓNICO
   // ==========================================
 
   const renderPhoneLink = (phone) => {
     if (!phone) return <span>-</span>;
+    const display = phone;
     const cleaned = cleanPhoneNumber(phone);
     return (
-      <a
-        href={`tel:${cleaned}`}
+      <span
         className="phone-link"
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={(e) => {
+          e.stopPropagation();
+          setContactPopup({ phone: cleaned, display });
+        }}
       >
-        {phone}
-      </a>
+        {display}
+      </span>
     );
   };
 
+  // ==========================================
+  // RENDER
+  // ==========================================
+
   return (
     <div>
+
+      {/* ========================================
+          INSTRUCCIONES PARA LLAMAR/WHATSAPP
+      ======================================== */}
+      <div
+        style={{
+          marginBottom: '1rem',
+          padding: '0.75rem 1rem',
+          backgroundColor: 'rgba(14, 165, 233, 0.1)',
+          color: 'var(--color-primary-hover)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid rgba(14, 165, 233, 0.2)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontWeight: 500
+        }}
+      >
+        <span>📞</span>
+        <span>
+          <strong>Los números de teléfono son enlaces.</strong> Toca cualquier número para elegir entre{' '}
+          <strong>llamar</strong> o <strong>enviar mensaje por WhatsApp</strong>.
+        </span>
+      </div>
 
       {/* ========================================
           CONTROLES
@@ -244,7 +297,7 @@ export default function Directory({ students }) {
       </div>
 
       {/* ========================================
-          AVISO
+          AVISO TIP (para ficha)
       ======================================== */}
 
       <div
@@ -533,6 +586,46 @@ export default function Directory({ students }) {
           }
         />
 
+      )}
+
+      {/* ========================================
+          POPUP DE CONTACTO (Llamar / WhatsApp)
+      ======================================== */}
+
+      {contactPopup && (
+        <div
+          className="contact-popup-overlay"
+          onClick={closePopup}
+        >
+          <div
+            className="contact-popup"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--color-dark)' }}>
+              {contactPopup.display}
+            </h4>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button
+                className="contact-popup-btn call"
+                onClick={handleCall}
+              >
+                <Phone size={20} /> Llamar
+              </button>
+              <button
+                className="contact-popup-btn whatsapp"
+                onClick={handleWhatsApp}
+              >
+                <MessageCircle size={20} /> WhatsApp
+              </button>
+            </div>
+            <button
+              className="contact-popup-close"
+              onClick={closePopup}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       )}
 
     </div>

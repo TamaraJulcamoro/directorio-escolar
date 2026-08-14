@@ -140,28 +140,7 @@ export default function Directory({ students }) {
   ]);
 
   // ==========================================
-  // MANEJADORES DEL POPUP DE CONTACTO
-  // ==========================================
-
-  const closePopup = () => setContactPopup(null);
-
-  const handleCall = () => {
-    if (contactPopup?.phone) {
-      window.location.href = `tel:${contactPopup.phone}`;
-      closePopup();
-    }
-  };
-
-  const handleWhatsApp = () => {
-    if (contactPopup?.phone) {
-      const waNumber = contactPopup.phone.replace('+', '');
-      window.open(`https://wa.me/${waNumber}`, '_blank');
-      closePopup();
-    }
-  };
-
-  // ==========================================
-  // RENDERIZAR ENLACE TELEFÓNICO
+  // COMPONENTE PARA ENLACE TELÉFONICO
   // ==========================================
 
   const renderPhoneLink = (phone) => {
@@ -181,15 +160,30 @@ export default function Directory({ students }) {
     );
   };
 
-  // ==========================================
-  // RENDER
-  // ==========================================
+  // Cerrar popup
+  const closePopup = () => setContactPopup(null);
+
+  // Acciones
+  const handleCall = () => {
+    if (contactPopup?.phone) {
+      window.location.href = `tel:${contactPopup.phone}`;
+      closePopup();
+    }
+  };
+
+  const handleWhatsApp = () => {
+    if (contactPopup?.phone) {
+      const waNumber = contactPopup.phone.replace('+', '');
+      window.open(`https://wa.me/${waNumber}`, '_blank');
+      closePopup();
+    }
+  };
 
   return (
     <div>
 
       {/* ========================================
-          INSTRUCCIONES PARA LLAMAR/WHATSAPP
+          INSTRUCCIONES (Teléfonos)
       ======================================== */}
       <div
         style={{
@@ -297,7 +291,7 @@ export default function Directory({ students }) {
       </div>
 
       {/* ========================================
-          AVISO TIP (para ficha)
+          AVISO (Tip)
       ======================================== */}
 
       <div
@@ -574,22 +568,7 @@ export default function Directory({ students }) {
       </div>
 
       {/* ========================================
-          MODAL
-      ======================================== */}
-
-      {selectedStudent && (
-
-        <StudentModal
-          student={selectedStudent}
-          onClose={() =>
-            setSelectedStudent(null)
-          }
-        />
-
-      )}
-
-      {/* ========================================
-          POPUP DE CONTACTO (Llamar / WhatsApp)
+          POPUP DE CONTACTO
       ======================================== */}
 
       {contactPopup && (
@@ -626,6 +605,21 @@ export default function Directory({ students }) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* ========================================
+          MODAL
+      ======================================== */}
+
+      {selectedStudent && (
+
+        <StudentModal
+          student={selectedStudent}
+          onClose={() =>
+            setSelectedStudent(null)
+          }
+        />
+
       )}
 
     </div>

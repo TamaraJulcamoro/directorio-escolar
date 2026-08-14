@@ -5,7 +5,7 @@ import {
   Users,
   Shield
 } from 'lucide-react';
-import { cleanPhoneNumber } from '../utils/phoneUtils';
+import { cleanPhoneNumber } from './utils/phoneUtils';
 
 export default function StudentModal({
   student,

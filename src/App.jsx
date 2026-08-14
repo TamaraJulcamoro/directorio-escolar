@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import FileUpload from './FileUpload';
-import Directory from './Directory.jsx';
+import Directory from './Directory';
 import { parseExcelFile } from './excelParser';
 import { supabase, BUCKET_NAME, FILE_NAME } from './supabaseClient';
 
